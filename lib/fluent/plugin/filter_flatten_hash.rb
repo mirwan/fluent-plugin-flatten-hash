@@ -10,6 +10,7 @@ module Fluent
     config_param :only_key, :string, :default => nil
     
     def configure(conf)
+      super
       if !@only_key.nil?
         begin
           @only_key = @only_key.split(".")
