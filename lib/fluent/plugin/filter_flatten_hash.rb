@@ -32,10 +32,13 @@ module Fluent
               true
             end
           end
+
           if !path.empty? or !item.has_key?(prefix)
             record
           else
-	    flatten_record(item[prefix], [prefix])
+            item.merge!(flatten_record(item[prefix], [prefix]))
+            item.delete(prefix)
+            record
           end
         else
           flatten_record(record, [])
