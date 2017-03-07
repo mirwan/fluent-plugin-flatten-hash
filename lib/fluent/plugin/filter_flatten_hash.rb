@@ -23,7 +23,7 @@ module Fluent
     def filter(tag, time, record)
         if !@only_key.nil?
           item = record
-          path = @only_key
+          path = @only_key.dup
           prefix = path.pop
 
           path.delete_if do |k|
