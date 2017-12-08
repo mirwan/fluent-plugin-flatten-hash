@@ -13,9 +13,17 @@ module Fluent::Plugin
     config_param :tag, :string, default: nil
     config_param :separator, :string, default: '.'
     config_param :flatten_array, :bool, default: true
+    config_param :only_key, :string, :default => nil
 
     def configure(conf)
       super
+      if !@only_key.nil?
+        begin
+          @only_key = @only_key.split(".")
+        rescue => e
+          raise Fluent::ConfigError, "only_key is illegal! only_key=#{@only_key}"
+        end
+      end
       if (!@tag &&
           !remove_tag_prefix &&
           !remove_tag_suffix &&
@@ -32,7 +40,25 @@ module Fluent::Plugin
     def process(tag, es)
       tag = @tag || tag
       es.each do |time, record|
-        record = flatten_record(record, [])
+        if !@only_key.nil?
+          item = record
+          path = @only_key.dup
+          prefix = path.pop
+
+          path.delete_if do |k|
+            if item.has_key?(k)
+              item = item[k]
+              true
+            end
+          end
+
+          if path.empty? and item.has_key?(prefix)
+            item.merge!(flatten_record(item[prefix], [prefix]))
+            item.delete(prefix)
+          end
+        else
+          record = flatten_record(record, [])
+        end
         t = tag.dup
         filter_record(t, time, record)
         router.emit(t, time, record)
